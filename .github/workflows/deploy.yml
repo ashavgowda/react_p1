@@ -24,16 +24,11 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    # Step 4: Install crypto polyfill (vite-plugin-node-polyfills)
-    - name: Install vite-plugin-node-polyfills
-      run: |
-        npm install vite-plugin-node-polyfills
-
-    # Step 5: Build the React app using Vite
+    # Step 4: Build the React app using Vite (ensure Vite is in your project)
     - name: Build the React app
       run: npm run build
 
-    # Step 6: Configure AWS CLI
+    # Step 5: Configure AWS CLI
     - name: Configure AWS CLI
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -41,12 +36,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # Step 7: Sync the build folder with the S3 bucket
+    # Step 6: Sync the build folder to S3
     - name: Sync build folder to S3
       run: |
         aws s3 sync ./build s3://${{ secrets.AWS_S3_BUCKET }} --delete
 
-    # Step 8: (Optional) Invalidate CloudFront cache
+    # Step 7: (Optional) Invalidate CloudFront cache
     - name: Invalidate CloudFront cache (optional)
       run: |
         aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
