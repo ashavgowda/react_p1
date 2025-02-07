@@ -20,28 +20,30 @@ jobs:
       with:
         node-version: '16'  # Ensure you're using Node.js v16 or higher
 
-    # Step 3: Install dependencies
-    - name: Install dependencies
-      run: npm install --force
+    # Step 3: Install a compatible version of TypeScript (downgrade to v4.4.0)
+    - name: Install TypeScript v4.4.0 (Compatible with react-scripts)
+      run: |
+        npm install typescript@^4.4.0
 
-    # Step 4: Build the React app using Vite (ensure Vite is in your project)
+    # Step 4: Install project dependencies
+    - name: Install dependencies
+      run: npm install
+
+    # Step 5: Build the React app using Vite (or the build tool you're using)
     - name: Build the React app
       run: npm run build
 
-    # Step 5: Configure AWS CLI
+    # Step 6: Configure AWS CLI
     - name: Configure AWS CLI
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+      
 
-    # Step 6: Sync the build folder to S3
+    # Step 7: Sync the build folder to S3
     - name: Sync build folder to S3
       run: |
         aws s3 sync ./build s3://${{ secrets.AWS_S3_BUCKET }} --delete
 
-    # Step 7: (Optional) Invalidate CloudFront cache
-    - name: Invalidate CloudFront cache (optional)
-      run: |
-        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+ 
