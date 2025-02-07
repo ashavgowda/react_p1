@@ -3,27 +3,42 @@ name: Deploy React App to S3
 on:
   push:
     branches:
-      - main  # Trigger on push to main branch
+      - main  # Trigger the workflow when pushing to the 'main' branch
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: Checkout the code from the repository
     - name: Checkout code
       uses: actions/checkout@v2
 
+    # Step 2: Set up Node.js
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '16'  # or the version your project uses
+        node-version: '16'  # Use the appropriate Node.js version for your project
 
+    # Step 3: Install dependencies
     - name: Install dependencies
       run: npm install
 
+    # Step 4: Ensure crypto polyfill for Node.js
+    - name: Install crypto polyfill
+      run: |
+        npm install crypto-browserify
+
+    # Step 5: Configure Vite to use the crypto polyfill
+    - name: Set up Vite config for crypto polyfill
+      run: |
+        echo "module.exports = { resolve: { alias: { crypto: require.resolve('crypto-browserify') } } };" > vite.config.js
+
+    # Step 6: Build the React app using Vite
     - name: Build the React app
       run: npm run build
 
+    # Step 7: Configure AWS CLI
     - name: Configure AWS CLI
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -31,10 +46,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    # Step 8: Sync the build folder with the S3 bucket
     - name: Sync build folder to S3
       run: |
         aws s3 sync ./build s3://${{ secrets.AWS_S3_BUCKET }} --delete
 
+    # Step 9: (Optional) Invalidate CloudFront cache
     - name: Invalidate CloudFront cache (optional)
       run: |
-        aws cloudfront create-invalidation --distribution-id YOUR_CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
